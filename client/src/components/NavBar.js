@@ -14,9 +14,13 @@ import MenuIcon from '@mui/icons-material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 
 const drawerWidth = 240;
-const navItems = ['Home', 'About', 'Contact'];
+const navItems = [
+  { name: 'Upload', path: '/Upload' },
+  { name: 'Get', path: '/get' },
+];
 
 function NavBar(props) {
   const { window } = props;
@@ -34,9 +38,9 @@ function NavBar(props) {
       <Divider />
       <List>
         {navItems.map((item) => (
-          <ListItem key={item} disablePadding>
-            <ListItemButton sx={{ textAlign: 'center' }}>
-              <ListItemText primary={item} />
+          <ListItem key={item.name} disablePadding>
+            <ListItemButton sx={{ textAlign: 'center' }} component={Link} to={item.path}>
+              <ListItemText primary={item.name} />
             </ListItemButton>
           </ListItem>
         ))}
@@ -47,8 +51,8 @@ function NavBar(props) {
   const container = window !== undefined ? () => window().document.body : undefined;
 
   return (
-   <>
-     <AppBar component="nav" sx={{ backgroundColor: '#9966CC', position:"relative"}} elevation={1}>
+    <>
+      <AppBar component="nav" sx={{ backgroundColor: '#9966CC', position: "relative" }} elevation={1}>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -62,15 +66,14 @@ function NavBar(props) {
           <Typography
             variant="h6"
             component="div"
-         
             sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
           >
             Decentralized File System
           </Typography>
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
             {navItems.map((item) => (
-              <Button key={item} sx={{ color: '#ffffff' }}>
-                {item}
+              <Button key={item.name} component={Link} to={item.path} sx={{ color: '#ffffff' }}>
+                {item.name}
               </Button>
             ))}
           </Box>
@@ -93,16 +96,11 @@ function NavBar(props) {
           {drawer}
         </Drawer>
       </nav>
-      </>
-   
+    </>
   );
 }
 
 NavBar.propTypes = {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * You won't need it on your project.
-   */
   window: PropTypes.func,
 };
 

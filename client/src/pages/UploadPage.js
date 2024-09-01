@@ -1,4 +1,8 @@
+import Upload from "../artifacts/contracts/Upload.sol/Upload.json";
 import * as React from 'react';
+import axios from "axios";
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import { useDropzone } from 'react-dropzone';
 import { Box, Paper, Typography, IconButton, Button, CircularProgress, Snackbar, Alert } from '@mui/material';
 import ImageIcon from '@mui/icons-material/Image';
@@ -10,7 +14,7 @@ import image1 from '../assets/image1.jpg';
 import image2 from '../assets/image2.jpg';
 import image3 from '../assets/image3.jpg';
 
-export default function Upload() {
+export default function UploadPage() {
     const images = [
         image1,
         image2,
@@ -28,12 +32,47 @@ export default function Upload() {
         arrows: false, // Hide arrows
     };
 
-
+    const [account, setAccount] = useState("");
+    const [contract, setContract] = useState(null);
+    const [provider, setProvider] = useState(null);
     const [file, setFile] = React.useState(null);
     const [loading, setLoading] = React.useState(false);
     const [alertOpen, setAlertOpen] = React.useState(false);
     const [alertMessage, setAlertMessage] = React.useState('');
     const [alertSeverity, setAlertSeverity] = React.useState('success');
+
+    useEffect(() => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+    
+        const loadProvider = async () => {
+          if (provider) {
+            window.ethereum.on("chainChanged", () => {
+              window.location.reload();
+            });
+    
+            window.ethereum.on("accountsChanged", () => {
+              window.location.reload();
+            });
+            await provider.send("eth_requestAccounts", []);
+            const signer = provider.getSigner();
+            const address = await signer.getAddress();
+            setAccount(address);
+            let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    
+            const contract = new ethers.Contract(
+              contractAddress,
+              Upload.abi,
+              signer
+            );
+            //console.log(contract);
+            setContract(contract);
+            setProvider(provider);
+          } else {
+            console.error("Metamask is not installed");
+          }
+        };
+        provider && loadProvider();
+      }, []);
 
     const onDrop = (acceptedFiles) => {
         if (acceptedFiles.length > 0) {
@@ -48,19 +87,107 @@ export default function Upload() {
         setFile(null);
     };
 
-    const handleSubmit = async () => {
+    useEffect(() => {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+      
+        const loadProvider = async () => {
+            try {
+                if (provider) {
+                    window.ethereum.on("chainChanged", () => {
+                        window.location.reload();
+                    });
+    
+                    window.ethereum.on("accountsChanged", () => {
+                        window.location.reload();
+                    });
+    
+                    await provider.send("eth_requestAccounts", []);
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    setAccount(address);
+                    let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    
+                    const contract = new ethers.Contract(
+                        contractAddress,
+                        Upload.abi,  // Ensure you have the correct ABI file
+                        signer
+                    );
+    
+                    setContract(contract);
+                    setProvider(provider);
+                    console.log("Contract initialized:", contract);
+                } else {
+                    console.error("Metamask is not installed");
+                }
+            } catch (error) {
+                console.error("Failed to load provider or contract:", error);
+            }
+        };
+    
+        if (provider) loadProvider();
+    }, []);
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setLoading(true);
         setAlertOpen(false);
-
-        // Simulate an upload process with a 10 seconds delay
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-
-        setLoading(false);
-        setAlertMessage('Image uploaded successfully!');
-        setAlertSeverity('success');
-        setAlertOpen(true);
-        setFile(null);
+    
+        if (!file) {
+            setLoading(false);
+            setAlertMessage('No image selected');
+            setAlertSeverity('warning');
+            setAlertOpen(true);
+            return;
+        }
+    
+        if (!contract) {
+            setLoading(false);
+            setAlertMessage('Contract is not initialized');
+            setAlertSeverity('error');
+            setAlertOpen(true);
+            return;
+        }
+    
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+    
+            console.log('Uploading to Pinata...');
+            const resFile = await axios({
+                method: "post",
+                url: "https://api.pinata.cloud/pinning/pinFileToIPFS",
+                data: formData,
+                headers: {
+                    pinata_api_key: `8034473bb652d8e77bad`,
+                    pinata_secret_api_key: `667be8c6c397f170b7737f3c9b88973d82cbc3c0cd4ccc791b6e361a57ff9de9`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+    
+            if (resFile.status !== 200) {
+                throw new Error(`Pinata upload failed: ${resFile.statusText}`);
+            }
+    
+            const ImgHash = `https://gateway.pinata.cloud/ipfs/${resFile.data.IpfsHash}`;
+            console.log('Pinata upload successful, ImgHash:', ImgHash);
+    
+            console.log('Adding to contract...');
+            await contract.add(account, ImgHash);
+    
+            setAlertMessage('Image uploaded successfully!');
+            setAlertSeverity('success');
+        } catch (e) {
+            console.error('Error during upload:', e);
+            setAlertMessage('Unable to upload image to Pinata or add to contract');
+            setAlertSeverity('error');
+        } finally {
+            setLoading(false);
+            setAlertOpen(true);
+            setFile(null);
+        }
     };
+    
+
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
@@ -98,8 +225,8 @@ export default function Upload() {
                     </div>
 
                     <div className="flex items-center justify-center ">
-                        <Box sx={{ width: '100%', margin: 'auto'  }} className="flex items-center justify-center flex-col ">
-                            <Paper 
+                        <Box sx={{ width: '100%', margin: 'auto' }} className="flex items-center justify-center flex-col ">
+                            <Paper
                                 {...getRootProps()}
                                 sx={{
                                     p: 4,
@@ -116,7 +243,7 @@ export default function Upload() {
                                     },
                                 }}
                                 elevation={0} // Removes the default shadow
-                                
+
                             >
                                 <input {...getInputProps()} />
                                 <ImageIcon sx={{ fontSize: 40, color: '#9e9e9e' }} />
@@ -141,7 +268,7 @@ export default function Upload() {
                                             p: 1,
                                             textAlign: 'center',
                                             backgroundColor: '#fff',
-                                           
+
                                             position: 'relative',
                                         }}
                                     >

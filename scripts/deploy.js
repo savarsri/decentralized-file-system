@@ -6,10 +6,15 @@ async function main() {
 
   await upload.deployed();
 
-  console.log("Library deployed to:", upload.address);
+  console.log("Upload contract deployed to:", upload.address);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+// Run the main function and handle errors
+main()
+  .then(() => {
+    console.log("Deployment successful!");
+  })
+  .catch((error) => {
+    console.error("Deployment failed:", error);
+    process.exitCode = 1;
+  });
