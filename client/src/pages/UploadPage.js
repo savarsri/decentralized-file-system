@@ -192,11 +192,17 @@ export default function UploadPage() {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/jpeg': [],
-            'image/png': [],
-            'image/webp': [],
-            'image/heic': [],
-            'image/jfif': [],
+            'image/jpeg': [], // JPEG images
+            'image/png': [],  // PNG images
+            'image/webp': [], // WebP images
+            'image/heic': [], // HEIC images
+            'image/jfif': [], // JFIF images
+            'application/pdf': [], // PDF files
+            'application/msword': [], // DOC files (Word)
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [], // DOCX files (Word)
+            'text/plain': [], // TXT files
+            'application/vnd.oasis.opendocument.text': [], // ODT files
+            '*':[] // All other types, if needed
         },
         multiple: false, // Ensure only one file is uploaded at a time
     });
@@ -248,7 +254,7 @@ export default function UploadPage() {
                                 <input {...getInputProps()} />
                                 <ImageIcon sx={{ fontSize: 40, color: '#9e9e9e' }} />
                                 <Typography variant="h6" sx={{ mt: 2, color: '#616161' }}>
-                                    Drag & Drop an Image Here
+                                    Drag & Drop File Here
                                 </Typography>
                                 <Typography variant="h6" sx={{ color: '#616161' }}>
                                     or
@@ -257,7 +263,7 @@ export default function UploadPage() {
                                     Click to Select
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: '#757575' }}>
-                                    (Only one image can be selected)
+                                    (Only one file can be selected)
                                 </Typography>
                             </Paper>
 
@@ -307,7 +313,7 @@ export default function UploadPage() {
                                         sx={{ mt: 2, width: '200px', borderRadius: '25px' }}
                                         disabled={loading} // Disable button while loading
                                     >
-                                        {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Upload Image'}
+                                        {loading ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Upload File'}
                                     </Button>
                                 </Box>
                             )}

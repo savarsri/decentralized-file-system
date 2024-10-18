@@ -6,7 +6,7 @@ contract Upload {
   
   struct Access{
      address user; 
-     bool access; //true or false
+     bool access;
   }
   mapping(address=>string[]) value;
   mapping(address=>mapping(address=>bool)) ownership;
@@ -28,7 +28,7 @@ contract Upload {
           accessList[msg.sender].push(Access(user,true));  
           previousData[msg.sender][user]=true;  
       }
-    
+          
   }
   function disallow(address user) public{
       ownership[msg.sender][user]=false;
