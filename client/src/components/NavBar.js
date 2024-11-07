@@ -20,6 +20,7 @@ const drawerWidth = 240;
 const navItems = [
   { name: 'Upload', path: '/Upload' },
   { name: 'Get', path: '/getAll' },
+  { name: 'Share', path: '/share' },
 ];
 
 function NavBar(props) {

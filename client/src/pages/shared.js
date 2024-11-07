@@ -1,40 +1,36 @@
+import NavBar from "../components/NavBar";
 import Upload from "../artifacts/contracts/Upload.sol/Upload.json";
 import * as React from "react";
-import axios from "axios";
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import Modal from "../components/Modal";
-import NavBar from "../components/NavBar";
-import { FaFileImage, FaFilePdf, FaFileAlt, FaShareAlt } from "react-icons/fa"; // Import icons
+import { FaFileImage, FaFilePdf, FaFileAlt, FaShareAlt } from "react-icons/fa";
 
-export default function GetAll() {
+export default function Shared() {
   const [account, setAccount] = useState("");
   const [contract, setContract] = useState(null);
   const [provider, setProvider] = useState(null);
   const [data, setData] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
 
   const getdata = async () => {
     let dataArray;
+    const Otheraddress = document.querySelector(".address").value;
     try {
-      dataArray = await contract.display(account); // Fetch data from the smart contract
+      if (Otheraddress) {
+        dataArray = await contract.display(Otheraddress);
+        console.log(dataArray);
+      } else {
+        dataArray = await contract.display(account);
+      }
     } catch (e) {
-      console.error("You don't have access", e);
+      alert("You don't have access");
       return;
     }
 
-    const isEmpty = Object.keys(dataArray).length === 0;
-
-    if (!isEmpty) {
-      const str = dataArray.toString();
-      const str_array = str.split(",");
-      console.log(str_array);
-
-      const fileData = str_array.map((item) => {
-        return {
-          fileLink: `${item.substring(6)}`, // Adjust this based on how your file URL is stored
-        };
-      });
+    if (dataArray && dataArray.length > 0) {
+      const str_array = dataArray.toString().split(",");
+      const fileData = str_array.map((item) => ({
+        fileLink: `${item.substring(6)}`,
+      }));
 
       setData(fileData); // Set the dynamically fetched file data
     } else {
@@ -42,7 +38,6 @@ export default function GetAll() {
     }
   };
 
-  // Get the file extension for each file and return the corresponding icon
   const getFileIcon = (fileLink) => {
     const fileExtension = fileLink.split(".").pop().toLowerCase();
     if (["jpg", "jpeg", "png", "gif", "webp"].includes(fileExtension)) {
@@ -72,11 +67,7 @@ export default function GetAll() {
         setAccount(address);
         let contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Your contract address
 
-        const contract = new ethers.Contract(
-          contractAddress,
-          Upload.abi,
-          signer
-        );
+        const contract = new ethers.Contract(contractAddress, Upload.abi, signer);
         setContract(contract);
         setProvider(provider);
       } else {
@@ -86,34 +77,28 @@ export default function GetAll() {
     provider && loadProvider();
   }, []);
 
-  useEffect(() => {
-    if (contract) {
-      getdata(); // Fetch file data once contract is set
-    }
-  }, [contract]);
-
   return (
     <>
       <NavBar />
-      {!modalOpen && (
+      <div className="container mx-auto flex flex-col items-center mt-10 p-6 border border-gray-300 rounded-lg shadow-lg max-w-md">
+        <h2 className="text-lg font-semibold mb-4">Enter Address:</h2>
+        <input
+          type="text"
+          placeholder="Enter Address"
+          className="address p-2 border border-gray-300 rounded mb-4 w-full"
+        />
         <button
-          onClick={() => setModalOpen(true)}
-          className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none"
+          className="center mt-2 button bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+          onClick={getdata}
         >
-          <FaShareAlt size={24} />
+          Get Data
         </button>
-      )}
-      {modalOpen && (
-        <Modal setModalOpen={setModalOpen} contract={contract}></Modal>
-      )}
+      </div>
       <br />
       <div className="p-4">
         <ul className="space-y-4">
           {data.map(({ fileLink }, index) => (
-            <li
-              key={index}
-              className="flex items-center space-x-4 border-b pb-2"
-            >
+            <li key={index} className="flex items-center space-x-4 border-b pb-2">
               {getFileIcon(fileLink)}
               <a
                 href={fileLink}
@@ -121,7 +106,7 @@ export default function GetAll() {
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
               >
-                {fileLink.split("/").pop()} {/* Display the file name */}
+                {fileLink.split("/").pop()}
               </a>
             </li>
           ))}
